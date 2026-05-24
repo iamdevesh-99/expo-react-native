@@ -1,0 +1,1363 @@
+# React Native Expo — Complete Guide: Account Creation to Deployment
+> **Version:** Expo SDK 51+ / EAS Build · **Last Updated:** May 2026  
+> **Official Docs:** https://docs.expo.dev · **EAS Docs:** https://docs.expo.dev/eas/
+
+---
+
+## Table of Contents
+
+1. [Prerequisites & System Requirements](#1-prerequisites--system-requirements)
+2. [Create Your Expo Account](#2-create-your-expo-account)
+3. [Install Node.js, Git & Expo CLI](#3-install-nodejs-git--expo-cli)
+4. [Create a New Expo Project](#4-create-a-new-expo-project)
+5. [Project Structure Deep Dive](#5-project-structure-deep-dive)
+6. [Configure app.json / app.config.js](#6-configure-appjson--appconfigjs)
+7. [Running the App Locally (Development)](#7-running-the-app-locally-development)
+8. [Using Expo Go for Testing](#8-using-expo-go-for-testing)
+9. [Install & Configure EAS CLI](#9-install--configure-eas-cli)
+10. [EAS Build — Initial Setup](#10-eas-build--initial-setup)
+11. [Android Build & Deployment](#11-android-build--deployment)
+12. [iOS Build & Deployment](#12-ios-build--deployment)
+13. [OTA Updates with EAS Update](#13-ota-updates-with-eas-update)
+14. [Environment Variables & Secrets](#14-environment-variables--secrets)
+15. [CI/CD with GitHub Actions](#15-cicd-with-github-actions)
+16. [Troubleshooting Common Issues](#16-troubleshooting-common-issues)
+17. [Quick Reference Cheatsheet](#17-quick-reference-cheatsheet)
+
+---
+
+## 1. Prerequisites & System Requirements
+
+> 🔗 **Official Reference:** https://docs.expo.dev/get-started/set-up-your-environment/
+
+### Minimum Requirements
+
+| Requirement | Version | Notes |
+|---|---|---|
+| Node.js | 18.x LTS or 20.x LTS | Avoid odd-numbered versions |
+| npm | 9.x+ (bundled with Node) | Or use yarn 3.x / pnpm 8.x |
+| Git | 2.x+ | Required for EAS |
+| Expo CLI | Latest | `npx expo` or global install |
+| EAS CLI | Latest | For builds & submissions |
+
+### For iOS Builds (Required)
+- macOS 13 (Ventura) or newer
+- Xcode 15 or newer (from Mac App Store)
+- Apple Developer Account ($99/year) → https://developer.apple.com/programs/
+- iOS 16+ physical device or Simulator
+
+### For Android Builds
+- Android Studio (for local testing) → https://developer.android.com/studio
+- Google Play Developer Account ($25 one-time) → https://play.google.com/console/
+- Java Development Kit (JDK) 17 — bundled with Android Studio
+
+### Cloud Builds (No Mac Needed for iOS)
+EAS Build runs on Expo's cloud infrastructure. You can build iOS apps from Windows/Linux using EAS Build without owning a Mac.
+> 🔗 https://docs.expo.dev/build/introduction/
+
+---
+
+## 2. Create Your Expo Account
+
+> 🔗 **Official Reference:** https://expo.dev/signup
+
+### Step 2.1 — Register at expo.dev
+
+1. Go to **https://expo.dev/signup**
+2. Enter your **Full Name**, **Email**, and **Password** (min 8 chars)
+3. Click **"Create Account"**
+4. Verify your email via the confirmation link Expo sends
+
+### Step 2.2 — Verify Your Email
+- Check your inbox for a message from **noreply@expo.dev**
+- Click **"Verify Email Address"**
+- You'll be redirected to the Expo dashboard
+
+### Step 2.3 — Explore the Expo Dashboard
+After login at **https://expo.dev**, you have access to:
+
+| Section | Purpose |
+|---|---|
+| **Projects** | View all your Expo apps |
+| **Builds** | EAS Build history and artifacts |
+| **Updates** | OTA update channels |
+| **Submissions** | App store submission history |
+| **Credentials** | Keystores, certificates, provisioning profiles |
+| **Secrets** | Environment secrets for builds |
+
+### Step 2.4 — Create an Organization (Optional but Recommended)
+For team projects:
+1. Dashboard → **Settings** → **Organizations** → **Create Organization**
+2. Invite team members by email
+> 🔗 https://docs.expo.dev/accounts/account-types/
+
+---
+
+## 3. Install Node.js, Git & Expo CLI
+
+> 🔗 **Official Reference:** https://docs.expo.dev/get-started/installation/
+
+### Step 3.1 — Install Node.js
+
+**Recommended: Use nvm (Node Version Manager)**
+
+```bash
+# macOS / Linux
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc   # or ~/.zshrc on macOS
+
+# Install and use Node 20 LTS
+nvm install 20
+nvm use 20
+nvm alias default 20
+
+# Verify
+node --version   # v20.x.x
+npm --version    # 10.x.x
+```
+
+**Windows — Use nvm-windows:**
+```powershell
+# Download installer from:
+# https://github.com/coreybutler/nvm-windows/releases
+nvm install 20.0.0
+nvm use 20.0.0
+```
+
+**Direct Download (Alternative):**
+- Official installer: https://nodejs.org/en/download
+
+### Step 3.2 — Install Git
+
+```bash
+# macOS
+brew install git
+
+# Ubuntu/Debian
+sudo apt install git
+
+# Windows: https://git-scm.com/download/win
+
+# Verify
+git --version
+```
+
+### Step 3.3 — Expo CLI
+
+Expo CLI is now included via **npx**. No global install required:
+
+```bash
+# Always use latest via npx (recommended)
+npx expo --version
+
+# OR install globally (optional)
+npm install -g expo-cli
+expo --version
+```
+
+> ⚠️ **Important:** The old `expo-cli` global package is deprecated. Use `npx expo` or install `@expo/cli` via:
+> ```bash
+> npm install -g @expo/cli
+> ```
+> 🔗 https://docs.expo.dev/more/expo-cli/
+
+### Step 3.4 — Install EAS CLI
+
+```bash
+# Install globally (required for builds)
+npm install -g eas-cli
+
+# Verify
+eas --version   # 10.x.x or higher
+```
+> 🔗 https://docs.expo.dev/eas-update/getting-started/
+
+---
+
+## 4. Create a New Expo Project
+
+> 🔗 **Official Reference:** https://docs.expo.dev/get-started/create-a-project/
+
+### Step 4.1 — Initialize Project
+
+```bash
+# Create with latest Expo SDK (recommended)
+npx create-expo-app@latest MyAwesomeApp
+
+# Choose a template interactively
+npx create-expo-app@latest MyAwesomeApp --template
+
+# With TypeScript (strongly recommended)
+npx create-expo-app@latest MyAwesomeApp --template expo-template-blank-typescript
+
+# With Expo Router (file-based navigation)
+npx create-expo-app@latest MyAwesomeApp --template expo-template-tabs
+```
+
+### Available Official Templates
+
+| Template | Command | Use Case |
+|---|---|---|
+| Blank | `--template blank` | Minimal starter |
+| Blank TypeScript | `--template blank-typescript` | TypeScript starter |
+| Tabs (Router) | `--template tabs` | Tab navigation with Expo Router |
+| Bare minimum | `--template bare-minimum` | No Expo managed workflow |
+
+> 🔗 All templates: https://docs.expo.dev/more/create-expo/
+
+### Step 4.2 — Navigate to Project and Open
+
+```bash
+cd MyAwesomeApp
+code .   # Open in VS Code (optional)
+```
+
+### Step 4.3 — Install Dependencies
+
+```bash
+npm install
+
+# Or with yarn
+yarn install
+```
+
+---
+
+## 5. Project Structure Deep Dive
+
+> 🔗 **Official Reference:** https://docs.expo.dev/develop/project-structure/
+
+### Standard Expo Project Layout
+
+```
+MyAwesomeApp/
+├── app/                    # Expo Router screens (if using Router)
+│   ├── (tabs)/
+│   │   ├── index.tsx       # Home screen
+│   │   └── explore.tsx     # Explore screen
+│   ├── _layout.tsx         # Root layout
+│   └── +not-found.tsx      # 404 page
+├── assets/                 # Images, fonts, icons
+│   ├── fonts/
+│   ├── images/
+│   └── adaptive-icon.png   # Android adaptive icon
+├── components/             # Reusable React components
+│   ├── ui/
+│   └── ThemedText.tsx
+├── constants/              # Colors, sizes, config
+│   └── Colors.ts
+├── hooks/                  # Custom React hooks
+├── scripts/                # Utility scripts
+│   └── reset-project.js
+├── .expo/                  # Auto-generated Expo cache (git-ignore this)
+├── .gitignore
+├── app.json                # ⭐ App configuration (name, version, icons)
+├── babel.config.js         # Babel transpiler config
+├── eas.json                # ⭐ EAS Build profiles
+├── expo-env.d.ts           # TypeScript Expo env types
+├── package.json            # Dependencies
+├── tsconfig.json           # TypeScript config
+└── README.md
+```
+
+### Key Files Explained
+
+**`app.json`** — Core app metadata. Controls app name, icons, splash screen, permissions.
+
+**`eas.json`** — Build profiles for development, preview, and production builds.
+
+**`babel.config.js`** — Required Babel presets. Do not delete.
+
+**`assets/`** — All static assets. Expo handles optimization automatically.
+
+---
+
+## 6. Configure app.json / app.config.js
+
+> 🔗 **Official Reference:** https://docs.expo.dev/workflow/configuration/  
+> 🔗 **Full app.json schema:** https://docs.expo.dev/versions/latest/config/app/
+
+### Step 6.1 — Basic app.json Configuration
+
+```json
+{
+  "expo": {
+    "name": "My Awesome App",
+    "slug": "my-awesome-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.myawesomeapp",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to capture photos.",
+        "NSLocationWhenInUseUsageDescription": "We need your location for nearby features."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.yourcompany.myawesomeapp",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "READ_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
+```
+
+### Step 6.2 — Dynamic Config with app.config.js
+
+Use `app.config.js` for environment-based configuration:
+
+```javascript
+// app.config.js
+export default ({ config }) => ({
+  ...config,
+  name: process.env.APP_ENV === "production" ? "MyApp" : "MyApp (Dev)",
+  slug: "my-awesome-app",
+  version: "1.0.0",
+  extra: {
+    apiUrl: process.env.API_URL,
+    eas: {
+      projectId: "your-project-uuid-from-expo.dev"
+    }
+  }
+});
+```
+
+> ⚠️ **Important:** Your `expo.extra.eas.projectId` must match the project ID shown in your Expo dashboard at https://expo.dev/projects
+
+### Step 6.3 — Icon & Splash Screen Requirements
+
+| Asset | Size | Format | Notes |
+|---|---|---|---|
+| App Icon (`icon.png`) | 1024x1024 px | PNG | No transparency |
+| Adaptive Icon foreground | 1024x1024 px | PNG | Android only, with transparency |
+| Splash Screen | 1284x2778 px | PNG | Expo handles scaling |
+| Favicon (web) | 32x32 px | PNG | |
+
+> 🔗 Icon guidelines: https://docs.expo.dev/develop/user-interface/splash-screen-and-app-icon/
+
+---
+
+## 7. Running the App Locally (Development)
+
+> 🔗 **Official Reference:** https://docs.expo.dev/develop/development-builds/introduction/
+
+### Step 7.1 — Start the Expo Dev Server
+
+```bash
+# Start with auto-detected bundler
+npx expo start
+
+# Clear cache and start (fixes many issues)
+npx expo start --clear
+
+# Tunnel mode (for testing over internet/different network)
+npx expo start --tunnel
+
+# Start for specific platform
+npx expo start --android
+npx expo start --ios
+npx expo start --web
+```
+
+### Step 7.2 — Metro Bundler Options
+
+After running `npx expo start`, the Metro bundler opens. Use these keyboard shortcuts:
+
+| Key | Action |
+|---|---|
+| `a` | Open Android emulator |
+| `i` | Open iOS simulator |
+| `w` | Open in web browser |
+| `r` | Reload app |
+| `m` | Toggle menu |
+| `j` | Open debugger |
+| `?` | Show all options |
+
+### Step 7.3 — Enable Fast Refresh
+
+Fast Refresh is **on by default** in Expo. It automatically updates your app when you save files. No configuration needed.
+> 🔗 https://docs.expo.dev/workflow/development-mode/
+
+### Step 7.4 — Install Dependencies Correctly
+
+Always use `expo install` instead of `npm install` for Expo-compatible packages:
+
+```bash
+# ✅ Correct — installs compatible version
+npx expo install expo-camera
+npx expo install expo-router react-native-safe-area-context
+
+# ❌ Avoid for Expo packages (may install incompatible version)
+npm install expo-camera
+```
+> 🔗 https://docs.expo.dev/workflow/expo-cli/#install
+
+---
+
+## 8. Using Expo Go for Testing
+
+> 🔗 **Official Reference:** https://docs.expo.dev/get-started/expo-go/
+
+### Step 8.1 — Install Expo Go
+
+- **iOS:** https://apps.apple.com/app/expo-go/id982107779
+- **Android:** https://play.google.com/store/apps/details?id=host.exp.exponent
+
+### Step 8.2 — Scan QR Code
+
+1. Run `npx expo start`
+2. A QR code appears in the terminal
+3. **iOS:** Use the built-in Camera app → tap the notification
+4. **Android:** Open Expo Go → tap "Scan QR code"
+
+> ⚠️ **Limitation:** Expo Go only supports the **Managed Workflow** and doesn't support custom native code. For custom native modules, use a **Development Build**.
+
+### Step 8.3 — Development Build (Replaces Expo Go for Advanced Apps)
+
+```bash
+# Install expo-dev-client
+npx expo install expo-dev-client
+
+# Create development build for Android
+eas build --profile development --platform android
+
+# Create development build for iOS (simulator)
+eas build --profile development-simulator --platform ios
+```
+> 🔗 https://docs.expo.dev/develop/development-builds/create-a-build/
+
+---
+
+## 9. Install & Configure EAS CLI
+
+> 🔗 **Official Reference:** https://docs.expo.dev/eas/
+
+EAS (Expo Application Services) is the cloud infrastructure for building, submitting, and updating your app.
+
+### Step 9.1 — Login to Your Expo Account
+
+```bash
+# Login via CLI
+eas login
+
+# You'll be prompted:
+# Email: your@email.com
+# Password: ••••••••
+
+# Verify login
+eas whoami
+```
+
+### Step 9.2 — Link Your Project
+
+```bash
+# From your project root
+eas init
+
+# This will:
+# 1. Ask you to select or create a project on expo.dev
+# 2. Add the projectId to app.json
+# 3. Set up the initial EAS configuration
+```
+
+### Step 9.3 — Verify EAS is Configured
+
+After `eas init`, check your `app.json`:
+
+```json
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+      }
+    }
+  }
+}
+```
+> 🔗 https://docs.expo.dev/build/setup/
+
+---
+
+## 10. EAS Build — Initial Setup
+
+> 🔗 **Official Reference:** https://docs.expo.dev/build/introduction/
+
+### Step 10.1 — Initialize eas.json
+
+```bash
+eas build:configure
+```
+
+This creates `eas.json` in your project root.
+
+### Step 10.2 — Full eas.json Configuration
+
+```json
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "requireCommit": true
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "development-device": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development"
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "credentialsSource": "remote"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "production"
+      },
+      "ios": {
+        "appleId": "your@appleid.com",
+        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID",
+        "appleTeamId": "YOUR_APPLE_TEAM_ID"
+      }
+    }
+  }
+}
+```
+
+### Build Profile Explained
+
+| Profile | Purpose | Distribution |
+|---|---|---|
+| `development` | Dev build for iOS Simulator | Internal |
+| `development-device` | Dev build for real device | Internal (via TestFlight/APK) |
+| `preview` | QA/testing build | Internal (APK/Ad Hoc) |
+| `production` | App Store / Play Store release | Store submission |
+
+> 🔗 https://docs.expo.dev/build/eas-json/
+
+---
+
+## 11. Android Build & Deployment
+
+> 🔗 **Official Reference:** https://docs.expo.dev/build/android/
+
+### Step 11.1 — Set Android Package Name
+
+In `app.json`:
+```json
+{
+  "expo": {
+    "android": {
+      "package": "com.yourcompany.appname",
+      "versionCode": 1
+    }
+  }
+}
+```
+
+> ⚠️ **Once published, the package name CANNOT be changed.** Choose carefully.
+> Format: `com.companyname.appname` (reverse domain notation)
+
+### Step 11.2 — Generate Android Keystore
+
+EAS can manage your keystore automatically:
+
+```bash
+# Let EAS generate and manage your keystore (recommended)
+eas credentials
+
+# Select:
+# > Android
+# > Your app
+# > Set up a new keystore
+
+# EAS will generate and securely store your keystore on Expo servers
+```
+
+> 🔗 https://docs.expo.dev/app-signing/android-credentials/
+
+**To use your own keystore:**
+```bash
+# Generate keystore locally
+keytool -genkeypair -v \
+  -storetype PKCS12 \
+  -keystore my-upload-key.keystore \
+  -alias my-key-alias \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000
+
+# Then upload to EAS
+eas credentials --platform android
+```
+
+### Step 11.3 — Build for Android
+
+```bash
+# Build APK for internal testing (preview profile)
+eas build --platform android --profile preview
+
+# Build AAB for Play Store (production profile)
+eas build --platform android --profile production
+
+# Build both platforms at once
+eas build --platform all --profile production
+```
+
+After running, EAS will:
+1. Ask to generate/use existing keystore
+2. Upload your code to Expo build servers
+3. Provide a build URL to monitor progress
+4. Email you when build completes
+
+**Check build status:**
+```bash
+eas build:list
+```
+> 🔗 Monitor at: https://expo.dev/builds
+
+### Step 11.4 — Download & Test APK
+
+```bash
+# List recent builds
+eas build:list --platform android
+
+# Download latest build (APK)
+# Or download via URL shown in build output
+```
+
+Install on device:
+```bash
+# Using ADB (Android Debug Bridge)
+adb install path/to/app.apk
+
+# Or simply scan the QR code from Expo dashboard
+```
+
+### Step 11.5 — Set Up Google Play Console
+
+1. Go to **https://play.google.com/console/**
+2. Create a new app → **Create App**
+3. Fill in:
+   - App name
+   - Default language
+   - App or Game type
+   - Free or Paid
+4. Accept policies → **Create App**
+5. Complete the store listing:
+   - Short description (80 chars max)
+   - Full description (4000 chars max)
+   - App icon (512x512 px PNG)
+   - Feature graphic (1024x500 px)
+   - Screenshots (at least 2 per device type)
+
+### Step 11.6 — Create Google Service Account (for Automated Submission)
+
+> 🔗 https://docs.expo.dev/submit/android/
+
+1. Go to **Google Play Console** → **Setup** → **API access**
+2. Link to a Google Cloud Project
+3. Create a **Service Account** in Google Cloud Console
+4. Grant the service account **Release Manager** role in Play Console
+5. Download the JSON key file → save as `google-service-account.json`
+
+> ⚠️ **Security:** Add `google-service-account.json` to `.gitignore` immediately!
+
+### Step 11.7 — Submit to Google Play
+
+**Automated submission via EAS:**
+```bash
+# Submit the latest successful production build
+eas submit --platform android --profile production
+
+# Submit a specific build
+eas submit --platform android --id BUILD_ID_FROM_EAS
+```
+
+**Manual submission:**
+1. Download the `.aab` file from Expo dashboard
+2. Go to Play Console → **Production** → **Create new release**
+3. Upload the AAB file
+4. Add release notes
+5. Click **Review release** → **Start rollout to Production**
+
+### Step 11.8 — Android App Signing (Important!)
+
+Google Play App Signing manages your release key. When you first upload:
+1. Play Console uses **upload key** (your keystore) to verify identity
+2. Google re-signs with a **release key** it manages
+3. **Never lose your upload keystore** — it's needed for future updates
+
+> 🔗 https://docs.expo.dev/app-signing/android-credentials/
+
+---
+
+## 12. iOS Build & Deployment
+
+> 🔗 **Official Reference:** https://docs.expo.dev/build/ios/
+
+### Step 12.1 — Apple Developer Account Setup
+
+1. Go to **https://developer.apple.com/programs/**
+2. Enroll in the **Apple Developer Program** ($99/year)
+3. Complete identity verification (may take 24–48 hours)
+4. Once approved, access the Apple Developer Portal at **https://developer.apple.com/account/**
+
+### Step 12.2 — Set iOS Bundle Identifier
+
+In `app.json`:
+```json
+{
+  "expo": {
+    "ios": {
+      "bundleIdentifier": "com.yourcompany.appname",
+      "buildNumber": "1",
+      "supportsTablet": true
+    }
+  }
+}
+```
+
+> ⚠️ **Bundle Identifier CANNOT be changed** once the app is on the App Store. Use reverse domain format.
+
+### Step 12.3 — Configure iOS Credentials
+
+EAS handles all iOS credentials automatically:
+
+```bash
+# Let EAS manage credentials (recommended)
+eas credentials --platform ios
+
+# EAS will create/manage:
+# - Distribution Certificate
+# - Provisioning Profile (Ad Hoc / App Store)
+# - Push Notification Key (if needed)
+```
+
+**What EAS manages for you:**
+- **Distribution Certificate** — Proves the app is from you
+- **Provisioning Profile** — Links app ID + devices + certificate
+- **App Store Connect API Key** — For automated submissions
+
+> 🔗 https://docs.expo.dev/app-signing/ios-credentials/
+
+### Step 12.4 — Register Devices for TestFlight (Ad Hoc Testing)
+
+```bash
+# Register test devices
+eas device:create
+
+# This provides a URL/QR code testers open on their iPhone
+# They install a profile, which registers their UDID
+```
+> 🔗 https://docs.expo.dev/build/internal-distribution/
+
+### Step 12.5 — Build for iOS Simulator
+
+```bash
+# Build for iOS Simulator (no Apple account needed)
+eas build --platform ios --profile development
+
+# Or start locally without EAS
+npx expo run:ios
+```
+
+### Step 12.6 — Build for iOS Device (TestFlight)
+
+```bash
+# Build for internal distribution (ad hoc / TestFlight)
+eas build --platform ios --profile preview
+
+# Build for App Store submission (production)
+eas build --platform ios --profile production
+```
+
+The build process will:
+1. Prompt to use or generate Apple credentials
+2. Ask for Apple ID if credentials need to be created
+3. Upload code to Expo's macOS build machines
+4. Sign the IPA with correct certificates
+5. Notify you when complete
+
+**Monitor build:**
+```bash
+eas build:list --platform ios
+# or visit https://expo.dev/builds
+```
+
+### Step 12.7 — Set Up App Store Connect
+
+1. Go to **https://appstoreconnect.apple.com/**
+2. Click **My Apps** → **+** → **New App**
+3. Fill in:
+   - Platform: iOS
+   - Name: Your App Name
+   - Primary Language
+   - Bundle ID: Must match `app.json` exactly
+   - SKU: Unique internal identifier (e.g., `MYAPP2024`)
+   - User Access: Full Access
+
+### Step 12.8 — Create App Store Connect API Key (Automated Submission)
+
+> 🔗 https://docs.expo.dev/submit/ios/
+
+1. App Store Connect → **Users and Access** → **Integrations** → **App Store Connect API**
+2. Click **Generate API Key**
+3. Select **Role: App Manager**
+4. Download the `.p8` key file
+5. Note the **Key ID** and **Issuer ID**
+
+```bash
+# Upload API key to EAS credentials
+eas credentials --platform ios
+# Select "App Store Connect API Key"
+```
+
+### Step 12.9 — Submit to App Store
+
+**Automated via EAS:**
+```bash
+# Submit the latest successful production iOS build
+eas submit --platform ios --profile production
+
+# This will:
+# 1. Upload the IPA to App Store Connect via Transporter
+# 2. Process typically takes 10-30 minutes
+# 3. Build appears in TestFlight for testing
+```
+
+**Manual via Transporter app (macOS):**
+1. Download **Transporter** from Mac App Store
+2. Sign in with Apple ID
+3. Drag and drop the `.ipa` file
+4. Click **Deliver**
+
+### Step 12.10 — TestFlight Testing
+
+1. App Store Connect → **TestFlight** tab
+2. Add **Internal Testers** (up to 100, must be in your team)
+3. Add **External Testers** (up to 10,000, requires Beta App Review ~24–48hrs)
+4. Send invitations via email
+
+### Step 12.11 — Submit for App Store Review
+
+1. App Store Connect → Your App → **App Store** tab
+2. Fill in complete metadata:
+   - App description
+   - Keywords (max 100 chars)
+   - Screenshots for all required device sizes
+   - Privacy Policy URL
+   - App Category
+   - Age Rating
+   - Pricing
+3. Under **Build**, select the TestFlight build you've tested
+4. Click **Submit for Review**
+
+**Review Timeline:**
+- First submission: 1–3 business days
+- Subsequent updates: Usually same day
+
+> 🔗 App Review guidelines: https://developer.apple.com/app-store/review/guidelines/
+
+---
+
+## 13. OTA Updates with EAS Update
+
+> 🔗 **Official Reference:** https://docs.expo.dev/eas-update/introduction/
+
+EAS Update lets you push JavaScript/asset updates without going through app store review.
+
+### Step 13.1 — Install expo-updates
+
+```bash
+npx expo install expo-updates
+```
+
+### Step 13.2 — Configure Updates Channel
+
+In `app.json`:
+```json
+{
+  "expo": {
+    "updates": {
+      "url": "https://u.expo.dev/YOUR_PROJECT_ID",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
+  }
+}
+```
+
+> 🔗 https://docs.expo.dev/eas-update/runtime-versions/
+
+### Step 13.3 — Push an OTA Update
+
+```bash
+# Publish update to production channel
+eas update --channel production --message "Bug fix: login screen"
+
+# Publish to preview channel for testing
+eas update --channel preview --message "Testing new feature"
+
+# Update for specific platform only
+eas update --channel production --platform android --message "Android-specific fix"
+```
+
+### Step 13.4 — Rollback an Update
+
+```bash
+# List recent updates
+eas update:list
+
+# Rollback to previous update
+eas update:rollback --channel production
+```
+
+### When OTA Updates Work vs Don't Work
+
+| Change Type | OTA Update | Requires App Store Build |
+|---|---|---|
+| JavaScript/TypeScript changes | ✅ Yes | ❌ No |
+| Image/asset changes | ✅ Yes | ❌ No |
+| Text, styling, logic | ✅ Yes | ❌ No |
+| New native module added | ❌ No | ✅ Yes |
+| `app.json` changes | ❌ No | ✅ Yes |
+| SDK version upgrade | ❌ No | ✅ Yes |
+
+---
+
+## 14. Environment Variables & Secrets
+
+> 🔗 **Official Reference:** https://docs.expo.dev/build-reference/variables/
+
+### Step 14.1 — Local Environment Variables
+
+Create `.env` file in project root:
+
+```bash
+# .env.local (for development)
+EXPO_PUBLIC_API_URL=https://dev.api.example.com
+EXPO_PUBLIC_GOOGLE_MAPS_KEY=your_key_here
+
+# .env.production
+EXPO_PUBLIC_API_URL=https://api.example.com
+```
+
+> ⚠️ All client-side variables **must be prefixed** with `EXPO_PUBLIC_`. Variables without this prefix are NOT accessible in the app bundle.
+
+**Access in code:**
+```typescript
+// In your React Native component
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+console.log(apiUrl); // https://dev.api.example.com
+```
+
+### Step 14.2 — Server-Side / Build Secrets (EAS)
+
+For sensitive values (API keys, signing passwords) that shouldn't be in `.env`:
+
+```bash
+# Add a secret to EAS (stored securely, not in code)
+eas secret:create --scope project --name MY_API_SECRET --value "super-secret-value"
+
+# List secrets
+eas secret:list
+
+# Delete a secret
+eas secret:delete MY_API_SECRET
+```
+
+Access in `eas.json`:
+```json
+{
+  "build": {
+    "production": {
+      "env": {
+        "SENTRY_AUTH_TOKEN": "$SENTRY_AUTH_TOKEN"
+      }
+    }
+  }
+}
+```
+> 🔗 https://docs.expo.dev/build-reference/variables/#using-secrets-in-environment-variables
+
+### Step 14.3 — .gitignore Setup
+
+```bash
+# Add to .gitignore
+.env
+.env.local
+.env.production
+google-service-account.json
+*.p8
+*.keystore
+```
+
+---
+
+## 15. CI/CD with GitHub Actions
+
+> 🔗 **Official Reference:** https://docs.expo.dev/build/building-on-ci/
+
+### Step 15.1 — Add Expo Token to GitHub Secrets
+
+1. Generate token: `eas account:token:create --name ci-token`
+2. Go to GitHub repo → **Settings** → **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Name: `EXPO_TOKEN`, Value: (paste your token)
+
+### Step 15.2 — Create GitHub Actions Workflow
+
+Create `.github/workflows/build.yml`:
+
+```yaml
+name: EAS Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build on EAS (Production)
+        run: eas build --platform all --profile production --non-interactive
+
+      - name: Submit to stores
+        run: eas submit --platform all --profile production --non-interactive
+```
+
+### Step 15.3 — Separate PR Preview Workflow
+
+```yaml
+# .github/workflows/preview.yml
+name: Preview Build
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+      - run: npm ci
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Create preview build
+        run: eas build --platform android --profile preview --non-interactive
+      - name: Publish OTA preview update
+        run: eas update --channel preview --message "PR preview" --non-interactive
+```
+
+> 🔗 https://docs.expo.dev/eas-update/github-actions/
+
+---
+
+## 16. Troubleshooting Common Issues
+
+> 🔗 **Official Reference:** https://docs.expo.dev/debugging/errors/
+
+### Issue 1: Metro Bundler Won't Start
+
+```bash
+# Kill all node processes and clear cache
+npx expo start --clear
+
+# Nuclear option: reset everything
+rm -rf node_modules .expo
+npm install
+npx expo start --clear
+```
+
+### Issue 2: "Unable to resolve module" Error
+
+```bash
+# Clear Watchman cache (macOS/Linux)
+watchman watch-del-all
+
+# Reset Metro cache
+npx expo start --reset-cache
+```
+
+### Issue 3: EAS Build Fails — Credential Issues
+
+```bash
+# Clear and regenerate credentials
+eas credentials --platform android
+eas credentials --platform ios
+
+# Check credential status
+eas credentials:list
+```
+
+### Issue 4: iOS Build — "No provisioning profile found"
+
+```bash
+# Sync credentials from Apple Developer Portal
+eas credentials --platform ios
+# Choose: Update provisioning profile
+```
+
+### Issue 5: Android Build — Keystore Issues
+
+```bash
+# View current keystore info
+eas credentials --platform android
+
+# If keystore is lost, you CANNOT update a published app with the same package name
+# Start fresh with a new package name (last resort)
+```
+
+### Issue 6: App Rejected by App Store
+
+Common rejection reasons and fixes:
+
+| Rejection Reason | Fix |
+|---|---|
+| Missing privacy policy URL | Add URL to App Store Connect listing |
+| Permissions not explained | Update `NSUsageDescription` in `app.json` |
+| Crashes on review device | Test on older iOS devices, fix crash |
+| Missing iPad screenshots | Add iPad screenshots if `supportsTablet: true` |
+| Login required for review | Add demo account credentials in review notes |
+
+### Issue 7: OTA Update Not Showing
+
+```bash
+# Check runtime version compatibility
+eas update:list
+
+# Verify channel matches in app.json and eas.json
+# production channel build must receive production channel updates
+```
+
+### Issue 8: expo-router Navigation Issues
+
+```bash
+# Reset Expo Router cache
+npx expo start --clear
+
+# Check that all files are in correct /app directory
+# Ensure _layout.tsx exists at app root
+```
+
+### Useful Debugging Commands
+
+```bash
+# Check project configuration
+npx expo config
+
+# Check if all packages are compatible with SDK version
+npx expo doctor
+
+# Detailed doctor check
+npx expo-doctor
+
+# View EAS build logs
+eas build:view BUILD_ID
+
+# View EAS update status
+eas update:list --branch production
+```
+
+---
+
+## 17. Quick Reference Cheatsheet
+
+### Essential Commands
+
+```bash
+# ── PROJECT SETUP ──────────────────────────────────────────
+npx create-expo-app@latest MyApp --template blank-typescript
+cd MyApp
+eas login
+eas init
+
+# ── DEVELOPMENT ───────────────────────────────────────────
+npx expo start                    # Start dev server
+npx expo start --clear            # Start with clean cache
+npx expo install <package>        # Install Expo-compatible package
+npx expo doctor                   # Check for issues
+
+# ── BUILDS ────────────────────────────────────────────────
+eas build -p android -e preview          # Android APK (internal testing)
+eas build -p android -e production       # Android AAB (Play Store)
+eas build -p ios -e development          # iOS Simulator build
+eas build -p ios -e preview             # iOS TestFlight (ad hoc)
+eas build -p ios -e production          # iOS App Store build
+eas build -p all -e production          # Both platforms
+
+# ── SUBMISSIONS ───────────────────────────────────────────
+eas submit -p android                    # Submit to Play Store
+eas submit -p ios                        # Submit to App Store
+eas submit -p all                        # Submit to both stores
+
+# ── OTA UPDATES ───────────────────────────────────────────
+eas update --channel production --message "Description"
+eas update:list
+eas update:rollback --channel production
+
+# ── CREDENTIALS ───────────────────────────────────────────
+eas credentials                          # Manage all credentials
+eas credentials --platform android       # Android-specific
+eas credentials --platform ios          # iOS-specific
+
+# ── MONITORING ────────────────────────────────────────────
+eas build:list                           # List recent builds
+eas build:view BUILD_ID                  # View specific build
+eas whoami                               # Check logged in user
+```
+
+### Build Profile Quick Reference
+
+| Command | Profile | Output | Purpose |
+|---|---|---|---|
+| `eas build -p android -e preview` | preview | `.apk` | QA testing |
+| `eas build -p android -e production` | production | `.aab` | Play Store |
+| `eas build -p ios -e development` | development | `.app` (Simulator) | Dev testing |
+| `eas build -p ios -e preview` | preview | `.ipa` (Ad Hoc) | TestFlight internal |
+| `eas build -p ios -e production` | production | `.ipa` (App Store) | App Store submission |
+
+### Store Submission Requirements Summary
+
+| Requirement | Android | iOS |
+|---|---|---|
+| Account cost | $25 (one-time) | $99/year |
+| Review time | 2–7 days | 1–3 days |
+| Bundle format | AAB (`.aab`) | IPA (`.ipa`) |
+| Min icon size | 512×512 px | 1024×1024 px |
+| Screenshots required | 2 per device | 3 per device (6.5" + 5.5") |
+| Privacy policy | Required | Required |
+| Build tool | EAS Build | EAS Build |
+| Auto-submit CLI | `eas submit` | `eas submit` |
+
+### Important URLs
+
+| Resource | URL |
+|---|---|
+| Expo Dashboard | https://expo.dev |
+| EAS Documentation | https://docs.expo.dev/eas/ |
+| Expo SDK Changelog | https://expo.dev/changelog |
+| App.json Schema | https://docs.expo.dev/versions/latest/config/app/ |
+| eas.json Reference | https://docs.expo.dev/build/eas-json/ |
+| EAS Update Docs | https://docs.expo.dev/eas-update/introduction/ |
+| Google Play Console | https://play.google.com/console/ |
+| App Store Connect | https://appstoreconnect.apple.com/ |
+| Apple Developer | https://developer.apple.com/account/ |
+| Expo Snack (online) | https://snack.expo.dev/ |
+| Expo Forums | https://forums.expo.dev/ |
+| Expo GitHub | https://github.com/expo/expo |
+
+---
+
+## Complete End-to-End Workflow Summary
+
+```
+Step 1: Create Expo account at expo.dev/signup
+Step 2: Install Node.js (nvm), Git, EAS CLI
+Step 3: npx create-expo-app@latest MyApp
+Step 4: Configure app.json (bundle ID, icons, permissions)
+Step 5: eas login && eas init (links to expo.dev project)
+Step 6: eas build:configure (creates eas.json)
+Step 7: Test with npx expo start + Expo Go or Dev Build
+Step 8: eas build -p android -e preview  →  test APK
+Step 9: eas build -p ios -e preview  →  test via TestFlight
+Step 10: eas build -p all -e production  →  production builds
+Step 11: eas submit -p android  →  Google Play
+Step 12: eas submit -p ios  →  App Store Connect
+Step 13: Publish JS updates anytime: eas update --channel production
+```
+
+---
+
+*This documentation covers Expo SDK 51+, EAS CLI 12+, and reflects the managed workflow with Expo Router. Always check https://docs.expo.dev for the latest updates as the Expo ecosystem evolves rapidly.*
